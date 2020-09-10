@@ -1,0 +1,78 @@
+#! /usr/bin/bash
+##############################################################################
+# This script is used for managing notebooks.
+#
+# Author:  Bill Salak
+#          <bill.salak@brainly.com>.
+#
+##############################################################################
+#                               Globals
+##############################################################################
+ACTION="$1"
+OPTION="$2"
+
+exit_status=0
+
+##############################################################################
+# Build the great_expectations notebook specified in $OPTION.
+#
+# Arguments:
+#   OPTION
+#
+# Returns:
+#   None
+##############################################################################
+function build() {
+    SUITE="$1"
+
+    if [[ -z "$SUITE" ]];
+    then
+        echo "Usage: notebook build ~suite~"
+        echo "Supply the name of the suite you would like to build the notebook for."
+        great_expectations suite list
+        exit_status=3
+    else
+        cd /home/project/great_expectations
+
+        great_expectations suite edit $SUITE --no-jupyter >/dev/null 2>&1
+        if [ $? -eq 0 ]
+        then
+            echo "Success - Run 'notebook edit' to start editing"
+        else
+            echo "Could not build suite" >&2
+        fi
+    fi
+
+    return
+}
+
+##############################################################################
+# Run Jupyter Notebook and expose externally.
+#
+# Arguments:
+#   None
+#
+# Returns:
+#   None
+##############################################################################
+function edit() {
+    cd /home/project/great_expectations
+    jupyter notebook --ip=0.0.0.0 --no-browser ./uncommitted
+
+    return
+}
+##############################################################################
+case "$ACTION" in
+    build)
+        build $OPTION
+        ;;
+    edit)
+        edit
+        ;;
+    *)
+        echo "Usage: notebook [build|edit] ~options~"
+        exit_status=3
+        ;;
+esac
+##############################################################################
+exit $exit_status
